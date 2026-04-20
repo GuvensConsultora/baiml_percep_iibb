@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="cron_baiml_sync_percep" model="ir.cron">
+        <field name="name">BAIML — Sincronizar percepciones IIBB desde padrón</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_baiml_sync_percep()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="numbercall">-1</field>
+    </record>
+
+</odoo>

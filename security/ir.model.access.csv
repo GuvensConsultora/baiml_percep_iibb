@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_baiml_padron_iibb_user,baiml.padron.iibb user,model_baiml_padron_iibb,account.group_account_user,1,0,0,0
+access_baiml_padron_iibb_manager,baiml.padron.iibb manager,model_baiml_padron_iibb,account.group_account_manager,1,1,1,1
+access_baiml_partner_percep_user,baiml.partner.percep user,model_baiml_partner_percep,account.group_account_user,1,0,0,0
+access_baiml_partner_percep_manager,baiml.partner.percep manager,model_baiml_partner_percep,account.group_account_manager,1,1,1,1
+access_baiml_import_padron_wizard,baiml.import.padron.wizard,model_baiml_import_padron_wizard,account.group_account_manager,1,1,1,1

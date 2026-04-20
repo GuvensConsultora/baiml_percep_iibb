@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_baiml_padron_iibb_list" model="ir.ui.view">
+        <field name="name">baiml.padron.iibb.list</field>
+        <field name="model">baiml.padron.iibb</field>
+        <field name="arch" type="xml">
+            <list string="Padrón IIBB" default_order="vigencia_desde desc,jurisdiccion,cuit">
+                <field name="jurisdiccion"/>
+                <field name="cuit"/>
+                <field name="razon_social"/>
+                <field name="tipo_contrib"/>
+                <field name="alicuota_percep"/>
+                <field name="alicuota_retenc"/>
+                <field name="vigencia_desde"/>
+                <field name="vigencia_hasta"/>
+                <field name="partner_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_baiml_padron_iibb_search" model="ir.ui.view">
+        <field name="name">baiml.padron.iibb.search</field>
+        <field name="model">baiml.padron.iibb</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="cuit"/>
+                <field name="razon_social"/>
+                <field name="partner_id"/>
+                <filter string="Entre Ríos" name="f_er" domain="[('jurisdiccion','=','ER')]"/>
+                <filter string="Santa Fe" name="f_sf" domain="[('jurisdiccion','=','SF')]"/>
+                <filter string="Tucumán" name="f_tuc" domain="[('jurisdiccion','=','TUC')]"/>
+                <separator/>
+                <filter string="Con alícuota percep &gt; 0" name="f_con_alic"
+                        domain="[('alicuota_percep','&gt;',0)]"/>
+                <group string="Agrupar por">
+                    <filter string="Jurisdicción" name="g_jur" context="{'group_by':'jurisdiccion'}"/>
+                    <filter string="Alícuota percep" name="g_alic" context="{'group_by':'alicuota_percep'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_baiml_padron_iibb" model="ir.actions.act_window">
+        <field name="name">Padrón IIBB</field>
+        <field name="res_model">baiml.padron.iibb</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_baiml_padron_iibb_search"/>
+    </record>
+
+</odoo>

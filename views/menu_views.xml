@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_baiml_iibb_root"
+              name="Percepciones IIBB"
+              parent="account.menu_finance_configuration"
+              sequence="100"/>
+
+    <menuitem id="menu_baiml_padron_iibb"
+              name="Padrón IIBB"
+              parent="menu_baiml_iibb_root"
+              action="action_baiml_padron_iibb"
+              sequence="10"/>
+
+    <menuitem id="menu_baiml_import_padron"
+              name="Importar padrón"
+              parent="menu_baiml_iibb_root"
+              action="action_baiml_import_padron_wizard"
+              sequence="20"/>
+
+</odoo>

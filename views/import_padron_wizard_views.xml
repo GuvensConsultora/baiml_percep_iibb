@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_baiml_import_padron_wizard_form" model="ir.ui.view">
+        <field name="name">baiml.import.padron.wizard.form</field>
+        <field name="model">baiml.import.padron.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Importar padrón IIBB">
+                <group>
+                    <field name="jurisdiccion"/>
+                    <field name="archivo" filename="archivo_nombre"/>
+                    <field name="archivo_nombre" invisible="1"/>
+                    <field name="reemplazar"/>
+                </group>
+                <footer>
+                    <button name="action_import" type="object"
+                            string="Importar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_baiml_import_padron_wizard" model="ir.actions.act_window">
+        <field name="name">Importar padrón IIBB</field>
+        <field name="res_model">baiml.import.padron.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
