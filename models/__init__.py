@@ -1,4 +1,3 @@
 from . import padron_iibb
-from . import partner_percep
+from . import padron_import
 from . import res_partner
-from . import account_move

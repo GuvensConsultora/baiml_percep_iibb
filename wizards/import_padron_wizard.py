@@ -35,6 +35,10 @@ class BaimlImportPadronWizard(models.TransientModel):
         default=True,
         help="Si está tildado, borra los registros existentes de la jurisdicción antes de importar.",
     )
+    sincronizar_partners = fields.Boolean(
+        default=True,
+        help="Si está tildado, luego del import sincroniza las FPs de percepción de los partners.",
+    )
 
     def action_import(self):
         self.ensure_one()
@@ -49,21 +53,88 @@ class BaimlImportPadronWizard(models.TransientModel):
         else:
             raise UserError(_("Parser para %s todavía no implementado.") % self.jurisdiccion)
 
+        Import = self.env["baiml.padron.import"]
         Padron = self.env["baiml.padron.iibb"]
-        if self.reemplazar:
+
+        batch = Import.create({
+            "jurisdiccion": self.jurisdiccion,
+            "archivo_nombre": self.archivo_nombre,
+        })
+
+        # Contar diffs antes de reemplazar
+        nuevos = actualizados = sin_cambio = 0
+        existentes_map = {}
+        if not self.reemplazar:
+            existentes = Padron.search_read(
+                [("jurisdiccion", "=", self.jurisdiccion)],
+                ["cuit", "vigencia_desde", "alicuota_percep"],
+            )
+            existentes_map = {
+                (e["cuit"], fields.Date.to_string(e["vigencia_desde"])): e
+                for e in existentes
+            }
+        else:
             Padron.search([("jurisdiccion", "=", self.jurisdiccion)]).unlink()
 
+        for row in rows:
+            row["import_id"] = batch.id
+            key = (row["cuit"], fields.Date.to_string(row["vigencia_desde"]))
+            previo = existentes_map.get(key)
+            if previo and abs(previo["alicuota_percep"] - row["alicuota_percep"]) < 1e-6:
+                sin_cambio += 1
+            elif previo:
+                actualizados += 1
+            else:
+                nuevos += 1
+
         Padron.create(rows)
+
+        batch.write({
+            "registros_importados": len(rows),
+            "registros_nuevos": nuevos,
+            "registros_actualizados": actualizados,
+            "registros_sin_cambio": sin_cambio,
+        })
+        batch.message_post(body=(
+            f"Importados {len(rows)} registros del padrón {self.jurisdiccion}. "
+            f"Nuevos: {nuevos}, actualizados: {actualizados}, sin cambio: {sin_cambio}."
+        ))
+
+        if self.sincronizar_partners:
+            self._sync_partners_de_batch(batch)
+
         return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "type": "success",
-                "title": _("Padrón importado"),
-                "message": _("Se cargaron %d registros para %s.") % (len(rows), self.jurisdiccion),
-                "sticky": False,
-            },
+            "type": "ir.actions.act_window",
+            "res_model": "baiml.padron.import",
+            "res_id": batch.id,
+            "view_mode": "form",
+            "target": "current",
         }
+
+    def _sync_partners_de_batch(self, batch):
+        Partner = self.env["res.partner"]
+        Padron = self.env["baiml.padron.iibb"]
+        cuits = Padron.search([("import_id", "=", batch.id)]).mapped("cuit")
+        partners = Partner.search([
+            ("vat", "in", cuits),
+            ("customer_rank", ">", 0),
+            ("parent_id", "=", False),
+        ])
+        stats = partners.baiml_sync_percep_desde_padron(import_batch=batch)
+        no_encontrados = len(cuits) - len(partners)
+        batch.write({
+            "partners_asignados": stats.get("asignados", 0),
+            "partners_modificados": stats.get("modificados", 0),
+            "partners_no_encontrados": no_encontrados,
+        })
+        batch.message_post(body=(
+            f"Sincronización de partners: "
+            f"asignados {stats.get('asignados', 0)}, "
+            f"modificados {stats.get('modificados', 0)}, "
+            f"sin cambio {stats.get('sin_cambio', 0)}, "
+            f"fuera de alcance {stats.get('fuera_scope', 0)}, "
+            f"CUITs del padrón no encontrados como partner: {no_encontrados}."
+        ))
 
     def _parse_ater(self, data):
         """Parsea CSV ATER (RG 208/24 + 280/24), separador ';', ISO-8859-1."""

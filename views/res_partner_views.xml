@@ -9,21 +9,18 @@
             <xpath expr="//page[@name='sales_purchases']" position="after">
                 <page string="Percepciones IIBB" name="baiml_percep">
                     <group>
+                        <field name="property_account_position_id" readonly="1"/>
                         <button name="baiml_sync_percep_desde_padron"
                                 type="object"
                                 string="Sincronizar desde padrón"
                                 class="oe_highlight"/>
                     </group>
-                    <field name="baiml_percep_ids">
-                        <list editable="bottom">
-                            <field name="jurisdiccion"/>
-                            <field name="tax_id"/>
-                            <field name="alicuota"/>
-                            <field name="vigencia_desde"/>
-                            <field name="vigencia_hasta"/>
-                            <field name="origen"/>
-                        </list>
-                    </field>
+                    <p class="text-muted">
+                        La posición fiscal se asigna automáticamente por el cron
+                        nocturno o al importar un padrón. Las FPs generadas por
+                        este módulo llevan el prefijo <b>BAIML Percep</b>. Si el
+                        partner tiene una FP manual distinta, no se sobreescribe.
+                    </p>
                 </page>
             </xpath>
         </field>

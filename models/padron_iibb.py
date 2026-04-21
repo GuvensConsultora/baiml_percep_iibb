@@ -13,18 +13,24 @@ class BaimlPadronIibb(models.Model):
     _description = "Registro de padrón IIBB por CUIT y jurisdicción"
     _order = "vigencia_desde desc, jurisdiccion, cuit"
     _rec_name = "cuit"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    jurisdiccion = fields.Selection(JURISDICCIONES, required=True, index=True)
-    cuit = fields.Char(required=True, index=True, size=11)
+    jurisdiccion = fields.Selection(JURISDICCIONES, required=True, index=True, tracking=True)
+    cuit = fields.Char(required=True, index=True, size=11, tracking=True)
     tipo_contrib = fields.Selection(
         [("D", "Directo"), ("C", "Convenio Multilateral"), ("P", "Profesiones Liberales")],
+        tracking=True,
     )
-    alicuota_percep = fields.Float(digits=(5, 4), string="Alíc. Percep. (%)")
-    alicuota_retenc = fields.Float(digits=(5, 4), string="Alíc. Reten. (%)")
-    razon_social = fields.Char()
+    alicuota_percep = fields.Float(digits=(5, 4), string="Alíc. Percep. (%)", tracking=True)
+    alicuota_retenc = fields.Float(digits=(5, 4), string="Alíc. Reten. (%)", tracking=True)
+    razon_social = fields.Char(tracking=True)
     fecha_publicacion = fields.Date()
-    vigencia_desde = fields.Date(required=True, index=True)
-    vigencia_hasta = fields.Date()
+    vigencia_desde = fields.Date(required=True, index=True, tracking=True)
+    vigencia_hasta = fields.Date(tracking=True)
+    import_id = fields.Many2one(
+        "baiml.padron.import", ondelete="set null", index=True,
+        string="Lote de importación",
+    )
     partner_id = fields.Many2one(
         "res.partner",
         compute="_compute_partner_id",

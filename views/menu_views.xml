@@ -18,4 +18,10 @@
               action="action_baiml_import_padron_wizard"
               sequence="20"/>
 
+    <menuitem id="menu_baiml_padron_import"
+              name="Lotes importados"
+              parent="menu_baiml_iibb_root"
+              action="action_baiml_padron_import"
+              sequence="30"/>
+
 </odoo>

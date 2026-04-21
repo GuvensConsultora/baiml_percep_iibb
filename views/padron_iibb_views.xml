@@ -15,6 +15,7 @@
                 <field name="vigencia_desde"/>
                 <field name="vigencia_hasta"/>
                 <field name="partner_id" optional="show"/>
+                <field name="import_id" optional="hide"/>
             </list>
         </field>
     </record>

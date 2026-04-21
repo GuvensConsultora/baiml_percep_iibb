@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_baiml_padron_import_list" model="ir.ui.view">
+        <field name="name">baiml.padron.import.list</field>
+        <field name="model">baiml.padron.import</field>
+        <field name="arch" type="xml">
+            <list string="Lotes de importación" default_order="fecha_import desc">
+                <field name="fecha_import"/>
+                <field name="jurisdiccion"/>
+                <field name="archivo_nombre"/>
+                <field name="user_id"/>
+                <field name="registros_importados"/>
+                <field name="registros_nuevos"/>
+                <field name="registros_actualizados"/>
+                <field name="partners_asignados"/>
+                <field name="partners_modificados"/>
+                <field name="partners_no_encontrados"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_baiml_padron_import_form" model="ir.ui.view">
+        <field name="name">baiml.padron.import.form</field>
+        <field name="model">baiml.padron.import</field>
+        <field name="arch" type="xml">
+            <form string="Lote de importación de padrón">
+                <sheet>
+                    <h1><field name="name" readonly="1"/></h1>
+                    <group>
+                        <group string="Origen">
+                            <field name="jurisdiccion" readonly="1"/>
+                            <field name="archivo_nombre" readonly="1"/>
+                            <field name="fecha_import" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                        </group>
+                        <group string="Padrón">
+                            <field name="registros_importados" readonly="1"/>
+                            <field name="registros_nuevos" readonly="1"/>
+                            <field name="registros_actualizados" readonly="1"/>
+                            <field name="registros_sin_cambio" readonly="1"/>
+                        </group>
+                        <group string="Partners">
+                            <field name="partners_asignados" readonly="1"/>
+                            <field name="partners_modificados" readonly="1"/>
+                            <field name="partners_no_encontrados" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Registros del padrón">
+                            <field name="padron_ids" readonly="1">
+                                <list>
+                                    <field name="cuit"/>
+                                    <field name="razon_social"/>
+                                    <field name="alicuota_percep"/>
+                                    <field name="vigencia_desde"/>
+                                    <field name="vigencia_hasta"/>
+                                    <field name="partner_id" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_baiml_padron_import" model="ir.actions.act_window">
+        <field name="name">Lotes importados</field>
+        <field name="res_model">baiml.padron.import</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

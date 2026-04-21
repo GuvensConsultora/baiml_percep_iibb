@@ -11,6 +11,7 @@
                     <field name="archivo" filename="archivo_nombre"/>
                     <field name="archivo_nombre" invisible="1"/>
                     <field name="reemplazar"/>
+                    <field name="sincronizar_partners"/>
                 </group>
                 <footer>
                     <button name="action_import" type="object"
