@@ -34,10 +34,9 @@
                 <separator/>
                 <filter string="Con alícuota percep &gt; 0" name="f_con_alic"
                         domain="[('alicuota_percep','&gt;',0)]"/>
-                <group string="Agrupar por">
-                    <filter string="Jurisdicción" name="g_jur" context="{'group_by':'jurisdiccion'}"/>
-                    <filter string="Alícuota percep" name="g_alic" context="{'group_by':'alicuota_percep'}"/>
-                </group>
+                <separator/>
+                <filter string="Jurisdicción" name="g_jur" context="{'group_by':'jurisdiccion'}"/>
+                <filter string="Alícuota percep" name="g_alic" context="{'group_by':'alicuota_percep'}"/>
             </search>
         </field>
     </record>
