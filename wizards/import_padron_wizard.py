@@ -29,7 +29,7 @@ class BaimlImportPadronWizard(models.TransientModel):
          ("TUC", "Tucumán (DGR)")],
         required=True,
     )
-    archivo = fields.Binary(required=True, string="Archivo del padrón")
+    archivo = fields.Binary(string="Archivo del padrón")
     archivo_nombre = fields.Char(string="Nombre del archivo")
     reemplazar = fields.Boolean(
         default=True,
@@ -44,8 +44,30 @@ class BaimlImportPadronWizard(models.TransientModel):
         self.ensure_one()
         if not self.archivo:
             raise UserError(_("Subí un archivo antes de importar."))
-
         data = base64.b64decode(self.archivo)
+        return self._run_import(data)
+
+    @api.model
+    def action_import_from_attachment(self, attachment_id, jurisdiccion,
+                                      reemplazar=True,
+                                      sincronizar_partners=True,
+                                      archivo_nombre=None):
+        """Punto de entrada para integraciones: el cliente sube el archivo
+        vía HTTP multipart como ir.attachment y luego pasa solo el id por
+        XML-RPC, evitando payloads grandes en base64."""
+        att = self.env["ir.attachment"].browse(attachment_id)
+        if not att.exists():
+            raise UserError(_("Attachment %s no existe.") % attachment_id)
+        wizard = self.create({
+            "jurisdiccion": jurisdiccion,
+            "archivo_nombre": archivo_nombre or att.name,
+            "reemplazar": reemplazar,
+            "sincronizar_partners": sincronizar_partners,
+        })
+        return wizard._run_import(att.raw)
+
+    def _run_import(self, data):
+        self.ensure_one()
         if self.jurisdiccion == "ER":
             rows = self._parse_ater(data)
         elif self.jurisdiccion == "SF":
