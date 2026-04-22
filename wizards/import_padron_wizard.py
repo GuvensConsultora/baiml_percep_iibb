@@ -1,7 +1,9 @@
 import base64
 import csv
+import gzip
 import io
 import re
+import zipfile
 from datetime import datetime
 
 from odoo import _, api, fields, models
@@ -10,6 +12,29 @@ from odoo.exceptions import UserError
 
 def _only_digits(s):
     return re.sub(r"\D", "", s or "")
+
+
+def _decompress_if_needed(data):
+    """Si el archivo es .gz o .zip, devuelve los bytes del CSV interno.
+    Si no, devuelve data tal cual. Permite al usuario subir comprimido
+    y esquivar el límite de ~67 MB del upload de Odoo.sh."""
+    if not data:
+        return data
+    # gzip
+    if data[:2] == b"\x1f\x8b":
+        return gzip.decompress(data)
+    # zip
+    if data[:4] == b"PK\x03\x04":
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            names = [n for n in zf.namelist() if not n.endswith("/")]
+            if not names:
+                raise UserError(_("El ZIP no contiene archivos."))
+            if len(names) > 1:
+                raise UserError(_(
+                    "El ZIP contiene varios archivos (%s). Subí uno solo."
+                ) % ", ".join(names))
+            return zf.read(names[0])
+    return data
 
 
 def _ddmmaaaa_to_date(s):
@@ -68,6 +93,7 @@ class BaimlImportPadronWizard(models.TransientModel):
 
     def _run_import(self, data):
         self.ensure_one()
+        data = _decompress_if_needed(data)
         if self.jurisdiccion == "ER":
             rows = self._parse_ater(data)
         elif self.jurisdiccion == "SF":

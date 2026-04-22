@@ -13,6 +13,11 @@
                     <field name="reemplazar"/>
                     <field name="sincronizar_partners"/>
                 </group>
+                <p class="text-muted">
+                    Se aceptan archivos <b>.csv</b>, <b>.zip</b> o <b>.gz</b>.
+                    Si el CSV supera 60 MB, comprimilo antes de subirlo
+                    (click derecho → Enviar a → Carpeta comprimida / zip).
+                </p>
                 <footer>
                     <button name="action_import" type="object"
                             string="Importar" class="btn-primary"/>
