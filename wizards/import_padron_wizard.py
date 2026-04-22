@@ -162,9 +162,26 @@ class BaimlImportPadronWizard(models.TransientModel):
         return rows
 
     def _parse_api_sf(self, data):
-        """Parser placeholder para API Santa Fe — a completar cuando tengamos
-        el archivo real y su layout documentado."""
-        raise UserError(_(
-            "Parser de API Santa Fe pendiente. Subí un archivo de muestra "
-            "y completamos el layout."
-        ))
+        """Parsea CSV API Santa Fe (PARP, RG API 14/2025), separador ';',
+        ISO-8859-1, SIN cabecera. Layout posicionalmente igual a ATER."""
+        text = data.decode("ISO-8859-1", errors="replace")
+        reader = csv.reader(io.StringIO(text), delimiter=";")
+        rows = []
+        for r in reader:
+            if len(r) < 12:
+                continue
+            try:
+                rows.append({
+                    "jurisdiccion": "SF",
+                    "fecha_publicacion": _ddmmaaaa_to_date(r[0]),
+                    "vigencia_desde": _ddmmaaaa_to_date(r[1]),
+                    "vigencia_hasta": _ddmmaaaa_to_date(r[2]),
+                    "cuit": _only_digits(r[3]),
+                    "tipo_contrib": r[4].strip()[:1] or False,
+                    "alicuota_percep": float((r[7] or "0").replace(",", ".")),
+                    "alicuota_retenc": float((r[8] or "0").replace(",", ".")),
+                    "razon_social": (r[11] or "").strip()[:70],
+                })
+            except (ValueError, IndexError):
+                continue
+        return rows
