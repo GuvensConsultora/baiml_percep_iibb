@@ -135,16 +135,29 @@ class BaimlImportPadronWizard(models.TransientModel):
             else:
                 nuevos += 1
 
-        Padron.create(rows)
+        # Create en batches con tracking desactivado y commits intermedios
+        # para evitar OOM en padrones grandes (SF: ~588k registros).
+        BATCH = 2000
+        total = len(rows)
+        Padron_fast = Padron.with_context(
+            tracking_disable=True,
+            mail_notrack=True,
+            mail_create_nolog=True,
+            mail_create_nosubscribe=True,
+        )
+        for i in range(0, total, BATCH):
+            Padron_fast.create(rows[i:i + BATCH])
+            self.env.cr.commit()
+            self.env.invalidate_all()
 
         batch.write({
-            "registros_importados": len(rows),
+            "registros_importados": total,
             "registros_nuevos": nuevos,
             "registros_actualizados": actualizados,
             "registros_sin_cambio": sin_cambio,
         })
         batch.message_post(body=(
-            f"Importados {len(rows)} registros del padrón {self.jurisdiccion}. "
+            f"Importados {total} registros del padrón {self.jurisdiccion}. "
             f"Nuevos: {nuevos}, actualizados: {actualizados}, sin cambio: {sin_cambio}."
         ))
 
