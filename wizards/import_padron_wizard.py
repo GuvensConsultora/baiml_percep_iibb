@@ -91,8 +91,26 @@ class BaimlImportPadronWizard(models.TransientModel):
         })
         return wizard._run_import(att.raw)
 
+    def _notify(self, title, message, type_="info"):
+        """Toast en la esquina superior derecha de la UI. Va por bus.bus y
+        llega en vivo porque hacemos commits intermedios durante el import."""
+        try:
+            self.env["bus.bus"]._sendone(
+                self.env.user.partner_id,
+                "simple_notification",
+                {"title": title, "message": message, "type": type_, "sticky": False},
+            )
+            self.env.cr.commit()
+        except Exception:
+            pass  # nunca romper el import por fallo de notificación
+
     def _run_import(self, data):
         self.ensure_one()
+        jur_label = dict(self._fields["jurisdiccion"].selection).get(
+            self.jurisdiccion, self.jurisdiccion
+        )
+        self._notify("Importando padrón", f"{jur_label}: leyendo archivo...")
+
         data = _decompress_if_needed(data)
         if self.jurisdiccion == "ER":
             rows = self._parse_ater(data)
@@ -100,6 +118,11 @@ class BaimlImportPadronWizard(models.TransientModel):
             rows = self._parse_api_sf(data)
         else:
             raise UserError(_("Parser para %s todavía no implementado.") % self.jurisdiccion)
+
+        self._notify(
+            "Archivo leído",
+            f"{jur_label}: {len(rows):,} filas parseadas. Cargando en base...",
+        )
 
         Import = self.env["baiml.padron.import"]
         Padron = self.env["baiml.padron.iibb"]
@@ -122,6 +145,10 @@ class BaimlImportPadronWizard(models.TransientModel):
                 for e in existentes
             }
         else:
+            self._notify(
+                "Reemplazando",
+                f"{jur_label}: borrando registros anteriores...",
+            )
             Padron.search([("jurisdiccion", "=", self.jurisdiccion)]).unlink()
 
         for row in rows:
@@ -145,10 +172,22 @@ class BaimlImportPadronWizard(models.TransientModel):
             mail_create_nolog=True,
             mail_create_nosubscribe=True,
         )
+        # Frecuencia de notificaciones: cada ~5% o cada 20k — lo que sea mayor.
+        notif_step = max(20000, (total // 20) or 1)
+        notif_next = notif_step
         for i in range(0, total, BATCH):
             Padron_fast.create(rows[i:i + BATCH])
+            done = min(i + BATCH, total)
             self.env.cr.commit()
             self.env.invalidate_all()
+            if done >= notif_next or done == total:
+                pct = (done * 100) // total if total else 100
+                self._notify(
+                    "Importando padrón",
+                    f"{jur_label}: {done:,} / {total:,} ({pct}%)",
+                )
+                while done >= notif_next:
+                    notif_next += notif_step
 
         batch.write({
             "registros_importados": total,
@@ -160,9 +199,24 @@ class BaimlImportPadronWizard(models.TransientModel):
             f"Importados {total} registros del padrón {self.jurisdiccion}. "
             f"Nuevos: {nuevos}, actualizados: {actualizados}, sin cambio: {sin_cambio}."
         ))
+        self._notify(
+            "Padrón importado",
+            f"{jur_label}: {total:,} registros cargados.",
+            type_="success",
+        )
 
         if self.sincronizar_partners:
+            self._notify(
+                "Sincronizando partners",
+                f"{jur_label}: asignando posiciones fiscales por CUIT...",
+            )
             self._sync_partners_de_batch(batch)
+            self._notify(
+                "Partners sincronizados",
+                f"{jur_label}: asignados {batch.partners_asignados}, "
+                f"modificados {batch.partners_modificados}.",
+                type_="success",
+            )
 
         return {
             "type": "ir.actions.act_window",
